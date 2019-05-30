@@ -5,15 +5,18 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.SplitPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.myownguild.game.Main;
@@ -31,36 +34,45 @@ public class GameScreen implements Screen {
     protected SpriteBatch batch; // рисовалка
 
     //init ui
-    Skin skin = StylesUI.skin;
-    BitmapFont font = StylesUI.FONT;
-    Window.WindowStyle windowStyle;
-    TextButton.TextButtonStyle textButtonStyle;
-    Label.LabelStyle labelStyle;
+    private Skin skin = StylesUI.skin;
+    private BitmapFont font = StylesUI.FONT;
+    private Window.WindowStyle windowStyle;
+    private TextButton.TextButtonStyle textButtonStyle;
+    private Label.LabelStyle labelStyle;
 
-    Table table;
+    private Table table;
     // finals
     final int pad = 15;
 
-    Window stats;
-    Window guildInfo;
-    Window missionInfo;
+    private Window stats;
+    private Window guildInfo;
+    private Window missionInfo;
+    private  Window clickZone;
 
     //stats
-    Label curGold;
-    Label curDay;
+    private Label curGold;
+    private Label curDay;
 
     // guildInfo
 
-    Label guildLvl;
-    Label guildStats;
+    private Label guildLvl;
+    private Label guildStats;
 
     // misson info
-    Missons missons;
-    Label missionName;
-    Label missionLvl;
-    Label missionHp;
-    Label missionReward;
-    //
+    private Missons missons;
+    private Label missionName;
+    private Label missionLvl;
+    private Label missionHp;
+    private Label missionReward;
+    // bar
+    private Texture iconHome;
+    private Texture iconUpgrade;
+    private TextureRegionDrawable trdHome;
+    private TextureRegionDrawable trdUpgrade;
+
+    private ImageButton.ImageButtonStyle imageButtonStyle;
+    private ImageButton home;
+    private ImageButton upgrades;
 
     public GameScreen(Main game) {
         this.game = game;
@@ -90,6 +102,8 @@ public class GameScreen implements Screen {
 
         initTable();
 
+        initImageButtons();
+
         stage.addActor(table);
     }
     private void Styles(){
@@ -109,16 +123,26 @@ public class GameScreen implements Screen {
         table.add(guildInfo).pad(pad).width(game.WIDTH/1.5f).height(game.HEIGHT/8);
         table.row();
         table.add(missionInfo).pad(pad).width(game.WIDTH/1.5f).height(game.HEIGHT/6);
-        table.align(Align.top);
+        table.row();
+        table.add(clickZone).pad(pad).width(game.WIDTH/1.5f).height(game.HEIGHT/6);
+        table.row();
+        table.add(home);
+        table.align(Align.center);
     }
 
     private void initLabels(){
         Label.LabelStyle statsLabelStyle = new Label.LabelStyle();
         Label.LabelStyle statsLabelStyle1 = new Label.LabelStyle();
+        Label.LabelStyle statsLabelStyle2 = new Label.LabelStyle();
+        Label.LabelStyle statsLabelStyle3 = new Label.LabelStyle();
         statsLabelStyle.font = StylesUI.FONT;
         statsLabelStyle1.font = StylesUI.FONT;
+        statsLabelStyle2.font = StylesUI.FONT;
+        statsLabelStyle3.font = StylesUI.FONT;
         statsLabelStyle.fontColor = Color.BLACK;
-        statsLabelStyle1.fontColor = Color.ORANGE;
+        statsLabelStyle1.fontColor = Color.GOLD;
+        statsLabelStyle2.fontColor = Color.SKY;
+        statsLabelStyle3.fontColor = Color.VIOLET;
         curGold = new CustomLabel("Gold: " + game.gold, statsLabelStyle1);
         curDay = new CustomLabel("Day: "+game.day, statsLabelStyle);
 
@@ -127,9 +151,9 @@ public class GameScreen implements Screen {
         guildStats = new CustomLabel("Army " + game.curArmy + "/" + game.maxArmy + " | " + "Power " + game.power + "pp", labelStyle);
 
         missons = new Missons(game.guildLvl);
-        missionName = new CustomLabel(missons.getName(), labelStyle);
+        missionName = new CustomLabel(missons.getName(), statsLabelStyle2);
         missionLvl = new CustomLabel("Mission lvl: " + missons.getLvl().toString(), labelStyle);
-        missionHp = new CustomLabel("CurHP" + missons.getReward().toString(), labelStyle);
+        missionHp = new CustomLabel("CurHP: " + missons.getReward().toString(), statsLabelStyle3);
         missionReward = new CustomLabel("Reward: " + missons.getReward().toString(), labelStyle);
     }
 
@@ -145,6 +169,10 @@ public class GameScreen implements Screen {
         missionInfo = new Window("Mission", windowStyle);
         missionInfo.setMovable(false);
         missionInfo.getTitleLabel().setAlignment(0);
+
+        clickZone = new Window("Click Zone", windowStyle);
+        clickZone.setMovable(false);
+        clickZone.getTitleLabel().setAlignment(0);
     }
 
     private void initWindowsActors(){
@@ -153,11 +181,29 @@ public class GameScreen implements Screen {
         guildInfo.add(guildLvl).pad(5).row();
         guildInfo.add(guildStats).pad(5);
 
-        missionInfo.add(missionName).top().width(200).row();
-        missionInfo.add(missionLvl).pad(pad);;
-        missionInfo.add(missionReward).pad(pad).row();
-        missionInfo.add(missionHp);
+        missionInfo.add(missionName).colspan(2).pad(10).row();
+        missionInfo.add(missionLvl).pad(10);
+        missionInfo.add(missionReward).pad(10).row();
+        missionInfo.add(missionHp).colspan(2).pad(10);
 
+    }
+
+    private void initImageButtons(){
+        imageButtonStyle = StylesUI.imageButtonStyle;
+
+        imageButtonStyle.down = skin.getDrawable("button-pressed");
+        imageButtonStyle.up = skin.getDrawable("button");
+
+        iconHome = new Texture("icons/checked.png");
+        iconUpgrade = new Texture("icons/pencil-edit-button.png");
+
+        trdHome = new TextureRegionDrawable(iconHome);
+        trdUpgrade = new TextureRegionDrawable(iconUpgrade);
+
+        imageButtonStyle.imageDown = new TextureRegionDrawable(trdHome);
+        imageButtonStyle.imageUp = new TextureRegionDrawable(trdHome);
+
+        home = new ImageButton(imageButtonStyle);
     }
 
     private void createCamera(){

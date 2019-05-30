@@ -8,6 +8,7 @@ public class Missons {
     private int reward = 0;
     private String name = null;
     private MissionNames missonsName;
+    private int noga = 1;
 
     private Random r;
 
@@ -21,7 +22,7 @@ public class Missons {
     private void init(){
         lvl = getMissionLvl(guildLvl);
         reward = getMissionReward(lvl);
-        name = "Mission 1";
+        name = "Mission "+noga;
 
     }
 
@@ -44,4 +45,6 @@ public class Missons {
     public String getName() {
         return name;
     }
+
+    public void pass(){}
 }
